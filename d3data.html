@@ -1,0 +1,23 @@
+<html>
+<body>
+<div>Hello</div>
+<svg id="svgVisualize" width="500" height="500"></svg>
+</body>
+<script type="application/javascript" src="js/jquery-2.1.1-dev.js"></script>
+<script type="application/javascript" src="js/d3.min.js"></script>
+<script>
+$(function() {
+    //alert("doing stuffz");
+    d3.json("sqldata", function(error, coordinates) {
+        var svg = d3.select("#svgVisualize");
+        svg.selectAll("circle")
+            .data(coordinates).enter()
+            .append("circle")
+            .attr("cx", function(d) { return d.x * 10; })
+            .attr("cy", function(d) { return d.y * 10; })
+            .attr("r", 10)
+            .style("fill", "red");
+    });
+});
+</script>
+</html>
