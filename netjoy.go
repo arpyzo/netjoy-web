@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-    "strconv"
     "net/http"
     "html/template"
     "encoding/json"
@@ -16,35 +15,15 @@ type PacketData struct {
     Length      uint32  `json:"length"`
 }
 
-var myVar int
-
-func handlerJs(writer http.ResponseWriter, request *http.Request) {
-    http.ServeFile(writer, request, request.URL.Path[1:])
-}
-
 func handlerDefault(writer http.ResponseWriter, request *http.Request) {
-    fmt.Fprintf(writer, "<body>Default: %s<br>", request.URL.Path)
-    fmt.Fprintf(writer, "Remote: %s<br>", request.RemoteAddr)
-    fmt.Fprintf(writer, "<a href=\"/special/special_text\">Special</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/template\">Template</a><br>")
+    fmt.Fprintf(writer, "<body>")
     fmt.Fprintf(writer, "<a href=\"/sqldata\">SQL Data</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/d3data\">D3 Data</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/d3display\">D3 Display</a><br>")
     fmt.Fprintf(writer, "</body>")
 }
 
-func handlerSpecial(writer http.ResponseWriter, request *http.Request) {
-    fmt.Fprintf(writer, "<body>Special: %s<br>", request.URL.Path)
-    fmt.Fprintf(writer, "Remote: %s</body>", request.RemoteAddr)
-}
-
-func handlerTemplate(writer http.ResponseWriter, request *http.Request) {
-    testTemplate, _ := template.ParseFiles("template.html")
-    testTemplate.Execute(writer, myVar)
-}
-
-func handlerChangeVar(writer http.ResponseWriter, request *http.Request) {
-    myVar, _ = strconv.Atoi(request.FormValue("myVar"))
-    http.Redirect(writer, request, "/template/", http.StatusFound)
+func handlerJs(writer http.ResponseWriter, request *http.Request) {
+    http.ServeFile(writer, request, request.URL.Path[1:])
 }
 
 func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
@@ -66,15 +45,10 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         if err != nil {
             fmt.Println(err)
         }
-        //fmt.Printf("%d --- %d --- %d\n", db_row.ethertype, db_row.count, db_row.length)
         db_packet_data = append(db_packet_data, db_row)
     }
 
     db.Close()
-    
-    //fmt.Println(db_packet_data[0])
-    //fmt.Println(db_packet_data[1])
-    //fmt.Println(db_packet_data[2])
     
     db_json, err := json.Marshal(db_packet_data)
     if err != nil {
@@ -84,20 +58,15 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
     fmt.Fprintf(writer, "%s", db_json)
 }
 
-func handlerD3Data(writer http.ResponseWriter, request *http.Request) {
-    testTemplate, _ := template.ParseFiles("d3data.html")
-    testTemplate.Execute(writer, myVar)
+func handlerD3Display(writer http.ResponseWriter, request *http.Request) {
+    testTemplate, _ := template.ParseFiles("d3display.html")
+    testTemplate.Execute(writer, nil)
 }
 
-func main() {
-    myVar = 13
-    
-    http.HandleFunc("/js/", handlerJs)
+func main() {  
     http.HandleFunc("/", handlerDefault)
-    http.HandleFunc("/special/", handlerSpecial)
-    http.HandleFunc("/template", handlerTemplate)
-    http.HandleFunc("/change", handlerChangeVar)
+    http.HandleFunc("/js/", handlerJs)
     http.HandleFunc("/sqldata", handlerSqlData)
-    http.HandleFunc("/d3data", handlerD3Data)
+    http.HandleFunc("/d3display", handlerD3Display)
     http.ListenAndServe("localhost:8080", nil)
 }

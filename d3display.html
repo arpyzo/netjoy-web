@@ -6,8 +6,10 @@
 <script type="application/javascript" src="js/jquery-2.1.1-dev.js"></script>
 <script type="application/javascript" src="js/d3.min.js"></script>
 <script>
+var svg_width = 500;
+var svg_height = 500;
+
 $(function() {
-    //alert("doing stuffz");
     d3.json("sqldata", function(error, coordinates) {
         var svg = d3.select("#svgVisualize");
         svg.selectAll("circle")
