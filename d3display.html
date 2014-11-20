@@ -12,12 +12,13 @@ var svg_height = 500;
 $(function() {
     d3.json("sqldata", function(error, coordinates) {
         var svg = d3.select("#svgVisualize");
-        svg.selectAll("circle")
+        svg.selectAll("rect")
             .data(coordinates).enter()
-            .append("circle")
-            .attr("cx", function(d) { return d.x * 10; })
-            .attr("cy", function(d) { return d.y * 10; })
-            .attr("r", 10)
+            .append("rect")
+            .attr("x", 50)
+            .attr("y", function(d, i) { return i * 100; })
+            .attr("width", function(d) { return d.length / 10; })
+            .attr("height", 50)
             .style("fill", "red");
     });
 });
