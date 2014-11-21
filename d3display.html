@@ -1,6 +1,6 @@
 <html>
 <body>
-<div>Hello</div>
+<div>Hello 1</div>
 <svg id="svgVisualize" width="500" height="500"></svg>
 </body>
 <script type="application/javascript" src="js/jquery-2.1.1-dev.js"></script>
@@ -10,16 +10,38 @@ var svg_width = 500;
 var svg_height = 500;
 
 $(function() {
+    var svg = d3.select("#svgVisualize");
+    
+    var gradient = svg.append("svg:defs")
+        .append("svg:linearGradient")
+        .attr("id", "gradient")
+        .attr("x1", "100%")
+        .attr("y1", "0%")
+        .attr("x2", "100%")
+        .attr("y2", "100%")
+        .attr("spreadMethod", "pad");
+    gradient.append("svg:stop")
+        .attr("offset", "0%")
+        .attr("stop-color", "#f88")
+        .attr("stop-opacity", 1);
+    gradient.append("svg:stop")
+        .attr("offset", "100%")
+        .attr("stop-color", "#f00")
+        .attr("stop-opacity", 1); 
+
     d3.json("sqldata", function(error, coordinates) {
-        var svg = d3.select("#svgVisualize");
-        svg.selectAll("rect")
+        bars = svg.selectAll("rect")
             .data(coordinates).enter()
             .append("rect")
             .attr("x", 50)
             .attr("y", function(d, i) { return i * 100; })
-            .attr("width", function(d) { return d.length / 10; })
+            .attr("width", 0)
             .attr("height", 50)
-            .style("fill", "red");
+            .style("fill", "url(#gradient)");
+        bars.transition()
+            .attr("width", function(d) { return d.length / 500; })
+            .ease("linear")
+            .duration(500);
     });
 });
 </script>
