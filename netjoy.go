@@ -33,7 +33,7 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
-    rows, err := db.Query("select packet_type, count(packet_type), sum(packet_length) from netjoy_test group by packet_type")
+    rows, err := db.Query("select ethertype, count(ethertype), sum(packet_length) from netjoy_test group by ethertype")
     if err != nil {
         fmt.Println(err)
     }
