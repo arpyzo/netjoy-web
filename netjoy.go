@@ -10,9 +10,11 @@ import (
 )
 
 type PacketData struct {
-    Ethertype   uint16  `json:"ethertype"`
-    Count       uint32  `json:"count"`
-    Length      uint32  `json:"length"`
+    Ethertype       uint16  `json:"ethertype"`
+    SourceIP        uint32  `json:"source_ip"`
+    DestinationIP   uint32  `json:"destination_ip"`
+    Count           uint32  `json:"count"`
+    Length          uint32  `json:"length"`
 }
 
 func handlerDefault(writer http.ResponseWriter, request *http.Request) {
@@ -33,21 +35,38 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
-    rows, err := db.Query("select ethertype, count(ethertype), sum(packet_length) from netjoy_test group by ethertype")
-    if err != nil {
-        fmt.Println(err)
-    }
-
     db_packet_data := []PacketData{}
-    for rows.Next() {
-        db_row := PacketData{}
-        err := rows.Scan(&db_row.Ethertype, &db_row.Count, &db_row.Length)
+    
+    if request.URL.Query().Get("view") == "ethertype" {
+        rows, err := db.Query("select ethertype, count(ethertype), sum(packet_length) from netjoy_test group by ethertype")
         if err != nil {
             fmt.Println(err)
         }
-        db_packet_data = append(db_packet_data, db_row)
-    }
 
+        for rows.Next() {
+            db_row := PacketData{}
+            err := rows.Scan(&db_row.Ethertype, &db_row.Count, &db_row.Length)
+            if err != nil {
+                fmt.Println(err)
+            }
+            db_packet_data = append(db_packet_data, db_row)
+        }
+    } else {
+        rows, err := db.Query("select source_ip, count(source_ip), sum(packet_length) from netjoy_test group by source_ip")
+        if err != nil {
+            fmt.Println(err)
+        }
+
+        for rows.Next() {
+            db_row := PacketData{}
+            err := rows.Scan(&db_row.SourceIP, &db_row.Count, &db_row.Length)
+            if err != nil {
+                fmt.Println(err)
+            }
+            db_packet_data = append(db_packet_data, db_row)
+        }    
+    }
+    
     db.Close()
     
     db_json, err := json.Marshal(db_packet_data)
@@ -63,10 +82,16 @@ func handlerD3Display(writer http.ResponseWriter, request *http.Request) {
     testTemplate.Execute(writer, nil)
 }
 
+func handlerD3Display2(writer http.ResponseWriter, request *http.Request) {
+    testTemplate, _ := template.ParseFiles("d3display2.html")
+    testTemplate.Execute(writer, nil)
+}
+
 func main() {  
     http.HandleFunc("/", handlerDefault)
     http.HandleFunc("/js/", handlerJs)
     http.HandleFunc("/sqldata", handlerSqlData)
     http.HandleFunc("/d3display", handlerD3Display)
+    http.HandleFunc("/d3display2", handlerD3Display2)
     http.ListenAndServe("localhost:8080", nil)
 }
