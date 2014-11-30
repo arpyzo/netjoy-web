@@ -19,12 +19,14 @@ type PacketData struct {
 
 func handlerDefault(writer http.ResponseWriter, request *http.Request) {
     fmt.Fprintf(writer, "<body>")
-    fmt.Fprintf(writer, "<a href=\"/sqldata\">SQL Data</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/d3display\">D3 Display</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/sqldata?view=ethertype\">SQL Data (ethertype)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/sqldata?view=source_ip\">SQL Data (source ip)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/d3display?view=ethertype\">D3 Display (ethertype)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/d3display?view=source_ip\">D3 Display (source ip)</a><br>")
     fmt.Fprintf(writer, "</body>")
 }
 
-func handlerJs(writer http.ResponseWriter, request *http.Request) {
+func handlerStatic(writer http.ResponseWriter, request *http.Request) {
     http.ServeFile(writer, request, request.URL.Path[1:])
 }
 
@@ -89,7 +91,9 @@ func handlerD3Display2(writer http.ResponseWriter, request *http.Request) {
 
 func main() {  
     http.HandleFunc("/", handlerDefault)
-    http.HandleFunc("/js/", handlerJs)
+    http.HandleFunc("/images/", handlerStatic)
+    http.HandleFunc("/css/", handlerStatic)
+    http.HandleFunc("/js/", handlerStatic)
     http.HandleFunc("/sqldata", handlerSqlData)
     http.HandleFunc("/d3display", handlerD3Display)
     http.HandleFunc("/d3display2", handlerD3Display2)

@@ -1,13 +1,31 @@
 <html>
 <head>
 <style>
+#main {
+    width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#controls {
+    margin: 20px;
+}
+
+a {
+    border: 1px;
+    border-style: solid;
+    border-radius: 4px;
+    text-decoration: none;
+}
+
 #dataSvg {
     display: block;
     margin-left: auto;
     margin-right: auto;
-    border: 1px;
-    border-style: dashed;
+    background-image: url("/images/diagonals.png");
+    background-repeat: repeat;
 }
+
 .label {
     text-anchor: middle;
     font-family: sans-serif;
@@ -18,11 +36,31 @@
 </style>
 </head>
 <body>
-<svg id="dataSvg" width="900" height="500"></svg>
+<div id="main">
+    <div id="controls">
+        Group By:
+        <a href="/d3display?view=ethertype">Ethertype</a>
+        <a href="/d3display?view=source_ip">Source IP</a>
+        <a href="/d3display?view=destination_ip">Destination IP</a>
+        <a href="/d3display?view=flow">Flow</a>
+        <a href="/d3display?view=port">Port</a>
+        <button>button</button>
+    </div>
+    
+    <svg id="dataSvg" width="900" height="500"></svg>
+</div>
 </body>
 <script type="application/javascript" src="js/jquery-2.1.1-dev.js"></script>
 <script type="application/javascript" src="js/d3.min.js"></script>
 <script>
+// Quick and dirty query parameter function
+// Sourced from www.fetchdesigns.com
+var queryParams = {};
+$.each(document.location.search.substr(1).split('&'), function(index, field) {
+    var queryParam = field.split('=');
+    queryParams[queryParam[0].toString()] = queryParam[1].toString();
+});
+
 var svg_width = 900;
 var svg_height = 500;
 
@@ -44,14 +82,19 @@ $(function() {
     gradient.append("svg:stop")
         .attr("offset", "100%")
         .attr("stop-color", "#f00")
-        .attr("stop-opacity", 1); 
+        .attr("stop-opacity", 1);
+    
+    viewType = "source_ip";
+    if (queryParams["view"] == "ethertype") {
+        viewType = queryParams["view"];
+    }
 
-    d3.json("sqldata", function(error, packet_data) {
+    d3.json("sqldata?view=" + viewType, function(error, packet_data) {
         bars = svg.selectAll("rect")
             .data(packet_data).enter()
             .append("rect")
             .attr("x", 50)
-            .attr("y", function(d, i) { return i * 100; })
+            .attr("y", function(d, i) { return i * 100 + 25; })
             .attr("width", 0)
             .attr("height", 50)
             .style("fill", "url(#gradient)");
@@ -63,11 +106,21 @@ $(function() {
         svg.selectAll("text")
             .data(packet_data).enter()
             .append("text")
-            .text(function(d) { return d.ethertype; })
+            .text(function(d) { 
+                if (viewType == "ethertype") {
+                    return d.ethertype;
+                } else {
+                    return d.source_ip;
+                }
+            })
             .attr("x", 25)
-            .attr("y", function(d, i) { return i * 100 + 30; })
+            .attr("y", function(d, i) { return i * 100 + 55; })
             .attr("class", "label");
     });
+});
+
+$("button").click(function() {
+    //$(this).
 });
 </script>
 </html>
