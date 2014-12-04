@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+    "net"
     "net/http"
     "html/template"
+    "encoding/binary"
     "encoding/json"
     "database/sql"
     _ "github.com/lib/pq"
@@ -11,7 +13,8 @@ import (
 
 type PacketData struct {
     Ethertype       uint16  `json:"ethertype"`
-    SourceIP        uint32  `json:"source_ip"`
+    //SourceIP        uint32  `json:"source_ip"`
+    SourceIP        string  `json:"source_ip"`
     DestinationIP   uint32  `json:"destination_ip"`
     Count           uint32  `json:"count"`
     Length          uint32  `json:"length"`
@@ -61,10 +64,26 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
 
         for rows.Next() {
             db_row := PacketData{}
-            err := rows.Scan(&db_row.SourceIP, &db_row.Count, &db_row.Length)
+            var intIP uint32
+            err := rows.Scan(&intIP, &db_row.Count, &db_row.Length)
             if err != nil {
                 fmt.Println(err)
             }
+            
+            ip := make(net.IP, 4)
+            binary.BigEndian.PutUint32(ip, intIP)
+            //db_row.SourceIP = string(ip)
+            db_row.SourceIP = ip.String()
+            
+            	//ipByte := make([]byte, 4)
+	//binary.BigEndian.PutUint32(ipByte, intIP)
+	//ip := net.IP(ipByte)
+
+            
+            fmt.Printf("INT IP \"%d\"\n", intIP)
+            //fmt.Printf("DOT IP \"%s\"\n", string(ip))
+            fmt.Printf("DOT IP \"%s\"\n", ip.String())
+            
             db_packet_data = append(db_packet_data, db_row)
         }    
     }
@@ -75,7 +94,7 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
     if err != nil {
         fmt.Println(err)
     }
-    fmt.Println(string(db_json))
+    //fmt.Println(string(db_json))
     fmt.Fprintf(writer, "%s", db_json)
 }
 
