@@ -1,8 +1,17 @@
 <html>
 <head>
 <style>
+@media (max-width: 1000px) {
+    #main {
+        width: 90%;
+    }
+}
+@media (min-width: 1001px) {
+    #main {
+        width: 900px;
+    }
+}
 #main {
-    width: 900px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -20,6 +29,7 @@ a {
 
 #dataSvg {
     display: block;
+    width: 100%;
     margin-left: auto;
     margin-right: auto;
     background-image: url("/images/diagonals.png");
@@ -27,7 +37,7 @@ a {
 }
 
 .label {
-    text-anchor: middle;
+    text-anchor: left;
     font-family: sans-serif;
     font-weight: bold;
     font-size: 12px;
@@ -47,7 +57,7 @@ a {
         <button>button</button>
     </div>
     
-    <svg id="dataSvg" width="900" height="500"></svg>
+    <svg id="dataSvg" height="500"></svg>
 </div>
 </body>
 <script type="application/javascript" src="js/jquery-2.1.1-dev.js"></script>
@@ -61,7 +71,7 @@ $.each(document.location.search.substr(1).split('&'), function(index, field) {
     queryParams[queryParam[0].toString()] = queryParam[1].toString();
 });
 
-var svg_width = 900;
+var svg_width = $("#dataSvg").width();
 var svg_height = 500;
 
 $(function() {
@@ -93,13 +103,13 @@ $(function() {
         bars = svg.selectAll("rect")
             .data(packet_data).enter()
             .append("rect")
-            .attr("x", 50)
+            .attr("x", 25)
             .attr("y", function(d, i) { return i * 100 + 25; })
             .attr("width", 0)
             .attr("height", 50)
             .style("fill", "url(#gradient)");
         bars.transition()
-            .attr("width", function(d) { return d.length / 900; })
+            .attr("width", function(d) { return d.length / (svg_width - 50); })
             .ease("linear")
             .duration(500);
             // Add drop shadow
@@ -114,7 +124,7 @@ $(function() {
                 }
             })
             .attr("x", 25)
-            .attr("y", function(d, i) { return i * 100 + 55; })
+            .attr("y", function(d, i) { return i * 100 + 15; })
             .attr("class", "label");
     });
 });
