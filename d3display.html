@@ -94,8 +94,8 @@ $(function() {
         .attr("stop-color", "#f00")
         .attr("stop-opacity", 1);
     
-    viewType = "source_ip";
-    if (queryParams["view"] == "ethertype") {
+    viewType = "destination_ip";
+    if (queryParams["view"] == "ethertype" || queryParams["view"] == "source_ip") {
         viewType = queryParams["view"];
     }
 
