@@ -16,9 +16,26 @@
     margin-right: auto;
 }
 
-#controls {
+.controls {
     margin: 20px;
 }
+
+input[type="checkbox"] {
+    display: none;
+}
+
+input[type="checkbox"] + label {
+    border: 1px;
+    border-style: solid;
+    border-radius: 4px;
+}
+
+input[type="checkbox"]:checked + label {
+    border: 1px;
+    border-style: dotted;
+    border-radius: 4px;
+}
+
 
 a {
     border: 1px;
@@ -47,7 +64,11 @@ a {
 </head>
 <body>
 <div id="main">
-    <div id="controls">
+    <div class="controls">
+        <input type="checkbox" id="one" name="one" value="one"><label for="one">One</label>
+        <input type="checkbox" id="two" name="two" value="two"><label for="two">Two</label>     
+    </div>
+    <div class="controls">
         Group By:
         <a href="/d3display?view=ethertype">Ethertype</a>
         <a href="/d3display?view=source_ip">Source IP</a>
@@ -55,6 +76,9 @@ a {
         <a href="/d3display?view=flow">Flow</a>
         <a href="/d3display?view=port">Port</a>
         <button>button</button>
+    </div>
+    <div class="controls">
+        Source Net: <input type="text">
     </div>
     
     <svg id="dataSvg" height="500"></svg>
