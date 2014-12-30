@@ -63,13 +63,14 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
 
         for rows.Next() {
             db_row := PacketData{}
-            var int_ip uint32
-            err := rows.Scan(&int_ip, &db_row.Count, &db_row.Length)
+            //var int_ip uint32
+            //err := rows.Scan(&int_ip, &db_row.Count, &db_row.Length)
+            err := rows.Scan(&db_row.SourceIP, &db_row.Count, &db_row.Length)
             if err != nil {
                 fmt.Println(err)
             }
             
-            db_row.SourceIP = ipStringFromInt(int_ip)           
+            //db_row.SourceIP = ipStringFromInt(int_ip)           
             db_packet_data = append(db_packet_data, db_row)
         }    
     } else {
@@ -80,13 +81,14 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
 
         for rows.Next() {
             db_row := PacketData{}
-            var int_ip uint32
-            err := rows.Scan(&int_ip, &db_row.Count, &db_row.Length)
+            //var int_ip uint32
+            //err := rows.Scan(&int_ip, &db_row.Count, &db_row.Length)
+            err := rows.Scan(&db_row.DestinationIP, &db_row.Count, &db_row.Length)
             if err != nil {
                 fmt.Println(err)
             }
             
-            db_row.DestinationIP = ipStringFromInt(int_ip)           
+            //db_row.DestinationIP = ipStringFromInt(int_ip)           
             db_packet_data = append(db_packet_data, db_row)
         }    
     }
