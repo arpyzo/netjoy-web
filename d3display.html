@@ -140,12 +140,20 @@ $(function() {
         svg.selectAll("text")
             .data(packet_data).enter()
             .append("text")
-            .text(function(d) { 
-                if (viewType == "ethertype") {
-                    return d.ethertype;
-                } else {
-                    return d.source_ip;
+            .text(function(d) {
+                switch(viewType) {
+                    case "ethertype":
+                        return d.ethertype;
+                    case "source_ip":
+                        return d.source_ip;
+                    case "destination_ip":
+                        return d.destination_ip;
                 }
+                //if (viewType == "ethertype") {
+                //    return d.ethertype;
+                //} else {
+                //    return d.source_ip;
+                //}
             })
             .attr("x", 25)
             .attr("y", function(d, i) { return i * 100 + 15; })
