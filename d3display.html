@@ -16,32 +16,56 @@
     margin-right: auto;
 }
 
-.controls {
+form {
+    height: 160px;
+    margin: 0;
+    border: 0;
+}
+
+.inline {
+    display: inline-block;
+    float: left;
+    width: 60%;
+}
+.control_line {
     margin: 20px;
 }
 
-input[type="checkbox"] {
+input[type="radio"] {
     display: none;
 }
-
-input[type="checkbox"] + label {
+input[type="radio"] + label {
     border: 1px;
     border-style: solid;
     border-radius: 4px;
 }
-
-input[type="checkbox"]:checked + label {
+input[type="radio"]:checked + label {
     border: 1px;
     border-style: dotted;
     border-radius: 4px;
 }
+.label {
+    text-anchor: left;
+    font-family: sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    fill: black;
+}
 
+input[type="text"] {
+    width: 10em;
+    margin-right: 1em;
+}
 
-a {
-    border: 1px;
-    border-style: solid;
-    border-radius: 4px;
-    text-decoration: none;
+.graph {
+    display: inline-block;
+    width: 40%;
+}
+#graph_submit {
+    display: block;
+    margin: 30px auto;
+    height: 70px;
+    width: 80px;
 }
 
 #dataSvg {
@@ -52,35 +76,29 @@ a {
     background-image: url("/images/diagonals.png");
     background-repeat: repeat;
 }
-
-.label {
-    text-anchor: left;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: 12px;
-    fill: black;
-}
 </style>
 </head>
 <body>
 <div id="main">
-    <div class="controls">
-        <input type="checkbox" id="one" name="one" value="one"><label for="one">One</label>
-        <input type="checkbox" id="two" name="two" value="two"><label for="two">Two</label>     
-    </div>
-    <div class="controls">
-        Group By:
-        <a href="/d3display?view=ethertype">Ethertype</a>
-        <a href="/d3display?view=source_ip">Source IP</a>
-        <a href="/d3display?view=destination_ip">Destination IP</a>
-        <a href="/d3display?view=flow">Flow</a>
-        <a href="/d3display?view=port">Port</a>
-        <button>button</button>
-    </div>
-    <div class="controls">
-        Source Net: <input type="text">
-    </div>
-    
+    <form action="d3display">
+        <div class="inline">
+            <div class="control_line">
+                Group By:
+                <input type="radio" name="view" id="ethertype" value="ethertype"><label for="ethertype">Ethertype</label>
+                <input type="radio" name="view" id="source_ip" value="source_ip"><label for="source_ip">Source IP</label>
+                <input type="radio" name="view" id="destination_ip" value="destination_ip"><label for="destination_ip">Destination IP</label>
+                <input type="radio" name="view" id="flow" value="flow"><label for="flow">Flow</label>
+                <input type="radio" name="view" id="port" value="port"><label for="port">Port</label>
+            </div>
+            <div class="control_line">
+                Source Net: <input type="text" name="source">
+                Destination Net: <input type="text" name="destination">
+            </div>
+        </div>
+        <div class="graph">
+            <input type="submit" id="graph_submit" value="Graph!">
+        </div>
+    </form>
     <svg id="dataSvg" height="500"></svg>
 </div>
 </body>
@@ -161,8 +179,9 @@ $(function() {
     });
 });
 
-$("button").click(function() {
+//$(":radio").click(function() {
     //$(this).
-});
+    //alert("Radio!");
+//});
 </script>
 </html>
