@@ -84,15 +84,22 @@ input[type="text"] {
         <div class="inline">
             <div class="control_line">
                 Group By:
-                <input type="radio" name="view" id="ethertype" value="ethertype"><label for="ethertype">Ethertype</label>
-                <input type="radio" name="view" id="source_ip" value="source_ip"><label for="source_ip">Source IP</label>
-                <input type="radio" name="view" id="destination_ip" value="destination_ip"><label for="destination_ip">Destination IP</label>
-                <input type="radio" name="view" id="flow" value="flow"><label for="flow">Flow</label>
-                <input type="radio" name="view" id="port" value="port"><label for="port">Port</label>
+                <input type="radio" name="group_by" id="ethertype" value="ethertype" checked><label for="ethertype">Ethertype</label>
+                <input type="radio" name="group_by" id="source_ip" value="source_ip"><label for="source_ip">Source IP</label>
+                <input type="radio" name="group_by" id="destination_ip" value="destination_ip"><label for="destination_ip">Destination IP</label>
+                <input type="radio" name="group_by" id="flow" value="flow"><label for="flow">Flow</label>
+                <input type="radio" name="group_by" id="port" value="port"><label for="port">Port</label>
             </div>
             <div class="control_line">
-                Source Net: <input type="text" name="source">
-                Destination Net: <input type="text" name="destination">
+                Aggregate By:
+                <input type="radio" name="aggregate_by" id="count" value="count" checked><label for="count">Packet Count</label>
+                <input type="radio" name="aggregate_by" id="length" value="length"><label for="length">Packet Length</label>
+            </div>
+            <div class="control_line">
+                Source (IP or CIDR): <input type="text" name="source">
+            </div>
+            <div class="control_line">
+                Destination (IP or CIDR): <input type="text" name="destination">
             </div>
         </div>
         <div class="graph">
@@ -136,12 +143,16 @@ $(function() {
         .attr("stop-color", "#f00")
         .attr("stop-opacity", 1);
     
-    viewType = "destination_ip";
-    if (queryParams["view"] == "ethertype" || queryParams["view"] == "source_ip") {
-        viewType = queryParams["view"];
+    groupBy = "ethertype";
+    if (queryParams["group_by"] == "source_ip" || queryParams["group_by"] == "destination_ip") {
+        groupBy = queryParams["group_by"];
     }
+    aggregateBy = "count";
+    if (queryParams["aggregate_by"] == "length") {
+        aggregateBy = queryParams["aggregate_by"];
+    }    
 
-    d3.json("sqldata?view=" + viewType, function(error, packet_data) {
+    d3.json("sqldata?group_by=" + groupBy, function(error, packet_data) {
         bars = svg.selectAll("rect")
             .data(packet_data).enter()
             .append("rect")
@@ -151,7 +162,13 @@ $(function() {
             .attr("height", 50)
             .style("fill", "url(#gradient)");
         bars.transition()
-            .attr("width", function(d) { return d.length / (svg_width - 50); })
+            .attr("width", function(d) {
+                if (aggregateBy == "count") {
+                    return d.count / (svg_width - 50);
+                } else {
+                    return d.length / (svg_width - 50);
+                }
+            })
             .ease("linear")
             .duration(500);
             // Add drop shadow
@@ -159,7 +176,7 @@ $(function() {
             .data(packet_data).enter()
             .append("text")
             .text(function(d) {
-                switch(viewType) {
+                switch(groupBy) {
                     case "ethertype":
                         return d.ethertype;
                     case "source_ip":
@@ -167,11 +184,6 @@ $(function() {
                     case "destination_ip":
                         return d.destination_ip;
                 }
-                //if (viewType == "ethertype") {
-                //    return d.ethertype;
-                //} else {
-                //    return d.source_ip;
-                //}
             })
             .attr("x", 25)
             .attr("y", function(d, i) { return i * 100 + 15; })

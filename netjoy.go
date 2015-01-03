@@ -4,6 +4,7 @@ import (
 	"fmt"
     "net"
     "net/http"
+    "net/url"
     "html/template"
     "encoding/binary"
     "encoding/json"
@@ -21,10 +22,10 @@ type PacketData struct {
 
 func handlerDefault(writer http.ResponseWriter, request *http.Request) {
     fmt.Fprintf(writer, "<body>")
-    fmt.Fprintf(writer, "<a href=\"/sqldata?view=ethertype\">SQL Data (ethertype)</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/sqldata?view=source_ip\">SQL Data (source ip)</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/d3display?view=ethertype\">D3 Display (ethertype)</a><br>")
-    fmt.Fprintf(writer, "<a href=\"/d3display?view=source_ip\">D3 Display (source ip)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/sqldata?group_by=ethertype\">SQL Data (ethertype)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/sqldata?group_by=source_ip\">SQL Data (source ip)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/d3display?group_by=ethertype\">D3 Display (ethertype)</a><br>")
+    fmt.Fprintf(writer, "<a href=\"/d3display?group_by=source_ip\">D3 Display (source ip)</a><br>")
     fmt.Fprintf(writer, "</body>")
 }
 
@@ -39,9 +40,11 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
+    createDatabaseQuery(request.URL.Query())
+    
     db_packet_data := []PacketData{}
     
-    if request.URL.Query().Get("view") == "ethertype" {
+    if request.URL.Query().Get("group_by") == "ethertype" {
         rows, err := db.Query("select ethertype, count(ethertype), sum(packet_length) from netjoy_test group by ethertype")
         if err != nil {
             fmt.Println(err)
@@ -55,7 +58,7 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
             }
             db_packet_data = append(db_packet_data, db_row)
         }
-    } else if request.URL.Query().Get("view") == "source_ip" {
+    } else if request.URL.Query().Get("group_by") == "source_ip" {
         rows, err := db.Query("select source_ip, count(source_ip), sum(packet_length) from netjoy_test group by source_ip")
         if err != nil {
             fmt.Println(err)
@@ -95,6 +98,12 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
     }
     //fmt.Println(string(db_json))
     fmt.Fprintf(writer, "%s", db_json)
+}
+
+func createDatabaseQuery(parameters url.Values) string {
+//func createDatabaseQuery(uri string) string {
+    fmt.Println(parameters.Get("group_by"))
+    return ""
 }
 
 func handlerD3Display(writer http.ResponseWriter, request *http.Request) {
