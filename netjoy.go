@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-    "net"
     "net/http"
     "net/url"
     "html/template"
-    "encoding/binary"
     "encoding/json"
     "database/sql"
     _ "github.com/lib/pq"
@@ -33,6 +31,11 @@ func handlerStatic(writer http.ResponseWriter, request *http.Request) {
     http.ServeFile(writer, request, request.URL.Path[1:])
 }
 
+func handlerD3Display(writer http.ResponseWriter, request *http.Request) {
+    testTemplate, _ := template.ParseFiles("d3display.html")
+    testTemplate.Execute(writer, nil)
+}
+
 func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
     db, err := sql.Open("postgres", "user=postgres password=postgres dbname=test sslmode=disable")
     if err != nil {
@@ -40,7 +43,8 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
-    createDatabaseQuery(request.URL.Query())
+    //createDatabaseQuery(request.URL.Query())
+    fmt.Println("DATABASE QUERY " + createDatabaseQuery(request.URL.Query()))
     
     db_packet_data := []PacketData{}
     
@@ -101,20 +105,28 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
 }
 
 func createDatabaseQuery(parameters url.Values) string {
-//func createDatabaseQuery(uri string) string {
-    fmt.Println(parameters.Get("group_by"))
-    return ""
+    groupBy := "ethertype"
+    groupByList := []string{"ethertype", "source_ip", "destination_ip", "source_port", "destination_port"}
+    if (isParameterOk(&groupByList, parameters.Get("group_by"))) {
+        groupBy  = parameters.Get("group_by")
+    }
+    
+    aggregateBy := "sum(packet_length)"
+    if (parameters.Get("aggregate_by") == "count") {
+        aggregateBy = "count(" + groupBy + ")"
+    }
+    
+    return "\"select " + groupBy + ", " + aggregateBy + " from netjoy_test group by " + groupBy + " order by " + aggregateBy + "desc\""    
 }
 
-func handlerD3Display(writer http.ResponseWriter, request *http.Request) {
-    testTemplate, _ := template.ParseFiles("d3display.html")
-    testTemplate.Execute(writer, nil)
-}
-
-func ipStringFromInt(int_ip uint32) string {
-    ip := make(net.IP, 4)
-    binary.BigEndian.PutUint32(ip, int_ip)
-    return ip.String()
+func isParameterOk(list *[]string, parameter string) bool {
+    for _, x := range *list {
+        if (parameter == x) {
+            return true
+        }
+    }
+    
+    return false
 }
 
 func main() {  
@@ -122,7 +134,7 @@ func main() {
     http.HandleFunc("/images/", handlerStatic)
     http.HandleFunc("/css/", handlerStatic)
     http.HandleFunc("/js/", handlerStatic)
-    http.HandleFunc("/sqldata", handlerSqlData)
     http.HandleFunc("/d3display", handlerD3Display)
+    http.HandleFunc("/sqldata", handlerSqlData)
     http.ListenAndServe("localhost:8080", nil)
 }

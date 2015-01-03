@@ -147,9 +147,9 @@ $(function() {
     if (queryParams["group_by"] == "source_ip" || queryParams["group_by"] == "destination_ip") {
         groupBy = queryParams["group_by"];
     }
-    aggregateBy = "count";
-    if (queryParams["aggregate_by"] == "length") {
-        aggregateBy = queryParams["aggregate_by"];
+    aggregateBy = "length";
+    if (queryParams["aggregate_by"] == "count") {
+        aggregateBy = "count";
     }    
 
     d3.json("sqldata?group_by=" + groupBy, function(error, packet_data) {
