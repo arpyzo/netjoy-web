@@ -10,12 +10,21 @@ import (
     _ "github.com/lib/pq"
 )
 
+const debug = 1
+
 type PacketData struct {
     Ethertype       uint16  `json:"ethertype"`
-    SourceIP        string  `json:"source_ip"`
-    DestinationIP   string  `json:"destination_ip"`
+    SourceIp        string  `json:"source_ip"`
+    DestinationIp   string  `json:"destination_ip"`
     Count           uint32  `json:"count"`
     Length          uint32  `json:"length"`
+}
+
+type Parameters struct {
+    groupBy         string
+    aggregateBy     string
+    sourceCidr      string
+    destinationCidr string
 }
 
 func handlerDefault(writer http.ResponseWriter, request *http.Request) {
@@ -43,65 +52,108 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
-    //createDatabaseQuery(request.URL.Query())
-    fmt.Println("DATABASE QUERY " + createDatabaseQuery(request.URL.Query()))
-    
-    db_packet_data := []PacketData{}
-    
-    if request.URL.Query().Get("group_by") == "ethertype" {
-        rows, err := db.Query("select ethertype, count(ethertype), sum(packet_length) from netjoy_test group by ethertype")
-        if err != nil {
-            fmt.Println(err)
-        }
+    parameters := extractParameters(request.URL.Query())
+    if (debug >= 1) {
+        fmt.Println("DEBUG - groupBy: " + parameters.groupBy + ", aggregateBy: " + parameters.aggregateBy)
+    }
 
+    databaseQuery := createDatabaseQuery(request.URL.Query())
+    if (debug >= 1) {
+        fmt.Println("DEBUG - databaseQuery: " + databaseQuery)
+    }
+        
+    dbPacketData := []PacketData{}
+    dbRow := PacketData{}
+    
+    rows, err := db.Query(databaseQuery)
+    if err != nil {
+        fmt.Println(err)
+        db.Close()
+        return
+    }
+    
+    switch {
+        case parameters.groupBy == "ethertype" && parameters.aggregateBy == "count":
         for rows.Next() {
-            db_row := PacketData{}
-            err := rows.Scan(&db_row.Ethertype, &db_row.Count, &db_row.Length)
+            err := rows.Scan(&dbRow.Ethertype, &dbRow.Count)
             if err != nil {
                 fmt.Println(err)
             }
-            db_packet_data = append(db_packet_data, db_row)
+            dbPacketData = append(dbPacketData, dbRow)
         }
-    } else if request.URL.Query().Get("group_by") == "source_ip" {
-        rows, err := db.Query("select source_ip, count(source_ip), sum(packet_length) from netjoy_test group by source_ip")
-        if err != nil {
-            fmt.Println(err)
-        }
-
+        case parameters.groupBy == "ethertype" && parameters.aggregateBy == "length":
         for rows.Next() {
-            db_row := PacketData{}
-            err := rows.Scan(&db_row.SourceIP, &db_row.Count, &db_row.Length)
+            err := rows.Scan(&dbRow.Ethertype, &dbRow.Length)
             if err != nil {
                 fmt.Println(err)
             }
             
-            db_packet_data = append(db_packet_data, db_row)
+            dbPacketData = append(dbPacketData, dbRow)
         }    
-    } else {
-        rows, err := db.Query("select destination_ip, count(destination_ip), sum(packet_length) from netjoy_test where '10.0.0.0/24' >> source_ip group by destination_ip")
-        if err != nil {
-            fmt.Println(err)
-        }
-
+        case parameters.groupBy == "source_ip" && parameters.aggregateBy == "count":
         for rows.Next() {
-            db_row := PacketData{}
-            err := rows.Scan(&db_row.DestinationIP, &db_row.Count, &db_row.Length)
+            err := rows.Scan(&dbRow.SourceIp, &dbRow.Count)
+            if err != nil {
+                fmt.Println(err)
+            }
+            dbPacketData = append(dbPacketData, dbRow)
+        }
+        case parameters.groupBy == "source_ip" && parameters.aggregateBy == "length":
+        for rows.Next() {
+            err := rows.Scan(&dbRow.SourceIp, &dbRow.Length)
             if err != nil {
                 fmt.Println(err)
             }
             
-            db_packet_data = append(db_packet_data, db_row)
+            dbPacketData = append(dbPacketData, dbRow)
+        }    
+        case parameters.groupBy == "destination_ip" && parameters.aggregateBy == "count":
+        for rows.Next() {
+            err := rows.Scan(&dbRow.DestinationIp, &dbRow.Count)
+            if err != nil {
+                fmt.Println(err)
+            }
+            dbPacketData = append(dbPacketData, dbRow)
+        }
+        case parameters.groupBy == "destination_ip" && parameters.aggregateBy == "length":
+        for rows.Next() {
+            err := rows.Scan(&dbRow.DestinationIp, &dbRow.Length)
+            if err != nil {
+                fmt.Println(err)
+            }
+            
+            dbPacketData = append(dbPacketData, dbRow)
         }    
     }
     
     db.Close()
     
-    db_json, err := json.Marshal(db_packet_data)
+    dbJson, err := json.Marshal(dbPacketData)
     if err != nil {
         fmt.Println(err)
+        return
     }
-    //fmt.Println(string(db_json))
-    fmt.Fprintf(writer, "%s", db_json)
+    if (debug >= 2) {
+        fmt.Println("DEBUG - " + string(dbJson))
+    }
+    fmt.Fprintf(writer, "%s", dbJson)
+}
+
+func extractParameters(queryValues url.Values) Parameters {
+    var parameters Parameters
+    
+    parameters.groupBy = "ethertype"
+    groupByList := []string{"ethertype", "source_ip", "destination_ip", "source_port", "destination_port"}
+    if (isParameterOk(&groupByList, queryValues.Get("group_by"))) {
+        parameters.groupBy  = queryValues.Get("group_by")
+    }
+    
+    parameters.aggregateBy = "length"
+    if (queryValues.Get("aggregate_by") == "count") {
+        parameters.aggregateBy = "count"
+    }
+    
+    return parameters
 }
 
 func createDatabaseQuery(parameters url.Values) string {
@@ -116,7 +168,7 @@ func createDatabaseQuery(parameters url.Values) string {
         aggregateBy = "count(" + groupBy + ")"
     }
     
-    return "\"select " + groupBy + ", " + aggregateBy + " from netjoy_test group by " + groupBy + " order by " + aggregateBy + "desc\""    
+    return "select " + groupBy + ", " + aggregateBy + " from netjoy_test group by " + groupBy + " order by " + aggregateBy + " desc"    
 }
 
 func isParameterOk(list *[]string, parameter string) bool {
