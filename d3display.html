@@ -143,16 +143,18 @@ $(function() {
         .attr("stop-color", "#f00")
         .attr("stop-opacity", 1);
     
-    groupBy = "ethertype";
-    if (queryParams["group_by"] == "source_ip" || queryParams["group_by"] == "destination_ip") {
-        groupBy = queryParams["group_by"];
-    }
-    aggregateBy = "length";
-    if (queryParams["aggregate_by"] == "count") {
-        aggregateBy = "count";
-    }    
-
-    d3.json("sqldata?group_by=" + groupBy, function(error, packet_data) {
+    //groupBy = "ethertype";
+    //if (queryParams["group_by"] == "source_ip" || queryParams["group_by"] == "destination_ip") {
+    //    groupBy = queryParams["group_by"];
+    //}
+    //aggregateBy = "length";
+    //if (queryParams["aggregate_by"] == "count") {
+    //    aggregateBy = "count";
+    //}
+    
+    // TODO: Check souce and destination?
+    
+    d3.json("sqldata" + window.location.search, function(error, packet_data) {
         bars = svg.selectAll("rect")
             .data(packet_data).enter()
             .append("rect")
@@ -163,7 +165,7 @@ $(function() {
             .style("fill", "url(#gradient)");
         bars.transition()
             .attr("width", function(d) {
-                if (aggregateBy == "count") {
+                if (queryParams["aggregate_by"] == "count") {
                     return d.count / (svg_width - 50);
                 } else {
                     return d.length / (svg_width - 50);
@@ -176,7 +178,7 @@ $(function() {
             .data(packet_data).enter()
             .append("text")
             .text(function(d) {
-                switch(groupBy) {
+                switch(queryParams["group_by"]) {
                     case "ethertype":
                         return d.ethertype;
                     case "source_ip":

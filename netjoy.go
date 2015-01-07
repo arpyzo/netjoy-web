@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+    "net"
     "net/http"
     "net/url"
     "html/template"
@@ -52,12 +53,15 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         return
     }
     
+    if (debug >= 1) {
+        fmt.Println("DEBUG - Raw query string: " + request.URL.RawQuery)
+    }
     parameters := extractParameters(request.URL.Query())
     if (debug >= 1) {
         fmt.Println("DEBUG - groupBy: " + parameters.groupBy + ", aggregateBy: " + parameters.aggregateBy)
     }
 
-    databaseQuery := createDatabaseQuery(request.URL.Query())
+    databaseQuery := createDatabaseQuery(parameters)
     if (debug >= 1) {
         fmt.Println("DEBUG - databaseQuery: " + databaseQuery)
     }
@@ -71,6 +75,8 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
         db.Close()
         return
     }
+    
+    // TODO: figure out how to elimiate repetative code here
     
     switch {
         case parameters.groupBy == "ethertype" && parameters.aggregateBy == "count":
@@ -153,22 +159,43 @@ func extractParameters(queryValues url.Values) Parameters {
         parameters.aggregateBy = "count"
     }
     
+    _, _, err := net.ParseCIDR(queryValues.Get("source"))
+    if (err == nil) {
+        parameters.sourceCidr = queryValues.Get("source")
+    }
+    
+    _, _, err = net.ParseCIDR(queryValues.Get("destination"))
+    if (err == nil) {
+        parameters.destinationCidr = queryValues.Get("destination")
+    }
+    
     return parameters
 }
 
-func createDatabaseQuery(parameters url.Values) string {
-    groupBy := "ethertype"
-    groupByList := []string{"ethertype", "source_ip", "destination_ip", "source_port", "destination_port"}
-    if (isParameterOk(&groupByList, parameters.Get("group_by"))) {
-        groupBy  = parameters.Get("group_by")
+func createDatabaseQuery(parameters Parameters) string {
+    var databaseQuery string
+
+    aggregateFunc := "sum(packet_length)"
+    if (parameters.aggregateBy == "count") {
+        aggregateFunc = "count(" + parameters.groupBy + ")"
     }
     
-    aggregateBy := "sum(packet_length)"
-    if (parameters.Get("aggregate_by") == "count") {
-        aggregateBy = "count(" + groupBy + ")"
+    databaseQuery = "select " + parameters.groupBy + ", " + aggregateFunc
+    databaseQuery += " from netjoy_test "
+    
+    // TODO: Clean up this ugly logic
+    if (parameters.sourceCidr != "") {
+        databaseQuery += "where '" + parameters.sourceCidr + "' >> source_ip "
+        if (parameters.destinationCidr != "") {
+            databaseQuery += "and '" + parameters.destinationCidr + "' >> destination_ip "        
+        }
+    } else if (parameters.destinationCidr != "") {
+        databaseQuery += "where '" + parameters.destinationCidr + "' >> destination_ip "
     }
     
-    return "select " + groupBy + ", " + aggregateBy + " from netjoy_test group by " + groupBy + " order by " + aggregateBy + " desc"    
+    databaseQuery += "group by " + parameters.groupBy + " order by " + aggregateFunc + " desc"
+    
+    return databaseQuery
 }
 
 func isParameterOk(list *[]string, parameter string) bool {
