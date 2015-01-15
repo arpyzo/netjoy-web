@@ -80,39 +80,39 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
     
     switch {
         case parameters.groupBy == "ethertype" && parameters.aggregateBy == "count":
-        for rows.Next() {
-            err := rows.Scan(&dbRow.Ethertype, &dbRow.Count)
-            if err != nil {
-                fmt.Println(err)
+            for rows.Next() {
+                err := rows.Scan(&dbRow.Ethertype, &dbRow.Count)
+                if err != nil {
+                    fmt.Println(err)
+                }
+                dbPacketData = append(dbPacketData, dbRow)
             }
-            dbPacketData = append(dbPacketData, dbRow)
-        }
         case parameters.groupBy == "ethertype" && parameters.aggregateBy == "length":
-        for rows.Next() {
-            err := rows.Scan(&dbRow.Ethertype, &dbRow.Length)
-            if err != nil {
-                fmt.Println(err)
-            }
-            
-            dbPacketData = append(dbPacketData, dbRow)
-        }    
+            for rows.Next() {
+                err := rows.Scan(&dbRow.Ethertype, &dbRow.Length)
+                if err != nil {
+                    fmt.Println(err)
+                }
+                
+                dbPacketData = append(dbPacketData, dbRow)
+            }    
         case parameters.groupBy == "source_ip" && parameters.aggregateBy == "count":
-        for rows.Next() {
-            err := rows.Scan(&dbRow.SourceIp, &dbRow.Count)
-            if err != nil {
-                fmt.Println(err)
+            for rows.Next() {
+                err := rows.Scan(&dbRow.SourceIp, &dbRow.Count)
+                if err != nil {
+                    fmt.Println(err)
+                }
+                dbPacketData = append(dbPacketData, dbRow)
             }
-            dbPacketData = append(dbPacketData, dbRow)
-        }
         case parameters.groupBy == "source_ip" && parameters.aggregateBy == "length":
-        for rows.Next() {
-            err := rows.Scan(&dbRow.SourceIp, &dbRow.Length)
-            if err != nil {
-                fmt.Println(err)
-            }
-            
-            dbPacketData = append(dbPacketData, dbRow)
-        }    
+            for rows.Next() {
+                err := rows.Scan(&dbRow.SourceIp, &dbRow.Length)
+                if err != nil {
+                    fmt.Println(err)
+                }
+                
+                dbPacketData = append(dbPacketData, dbRow)
+            }    
         case parameters.groupBy == "destination_ip" && parameters.aggregateBy == "count":
         for rows.Next() {
             err := rows.Scan(&dbRow.DestinationIp, &dbRow.Count)
@@ -122,14 +122,14 @@ func handlerSqlData(writer http.ResponseWriter, request *http.Request) {
             dbPacketData = append(dbPacketData, dbRow)
         }
         case parameters.groupBy == "destination_ip" && parameters.aggregateBy == "length":
-        for rows.Next() {
-            err := rows.Scan(&dbRow.DestinationIp, &dbRow.Length)
-            if err != nil {
-                fmt.Println(err)
-            }
-            
-            dbPacketData = append(dbPacketData, dbRow)
-        }    
+            for rows.Next() {
+                err := rows.Scan(&dbRow.DestinationIp, &dbRow.Length)
+                if err != nil {
+                    fmt.Println(err)
+                }
+                
+                dbPacketData = append(dbPacketData, dbRow)
+            }    
     }
     
     db.Close()
